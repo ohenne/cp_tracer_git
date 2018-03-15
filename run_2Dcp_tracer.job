@@ -1,0 +1,19 @@
+#!/bin/bash
+STEM=test1plus4K #experiment name
+mkdir -p ${STEM}
+
+cp input/irt_objects_input_00_r_int.srv input/irt_objects_input_00.srv
+if [ ! -f input/irt_objects_input_u.srv ]; then
+  cdo -f srv sellevel,50 $modelo/${STEM}/level1/${STEM}.out.vol.u.nc input/irt_objects_input_u.srv
+fi
+if [ ! -f input/irt_objects_input_v.srv ]; then
+  cdo -f srv sellevel,50 $modelo/${STEM}/level1/${STEM}.out.vol.v.nc input/irt_objects_input_v.srv
+fi
+cp ${STEM}/irt_tracks_sorted_r_int.txt input/irt_tracks_sorted.txt
+cp ${STEM}/irt_tracks_mask_r_int.srv input/irt_tracks_mask.srv
+
+
+./irt_cp_tracking.x
+
+
+

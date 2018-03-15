@@ -1,0 +1,19 @@
+#!/bin/bash
+STEM=test1plus4K #experiment name
+mkdir -p ${STEM}
+
+cp input/irt_objects_input_00_r_int.srv input/irt_objects_input_00.srv
+ln -sfn $modelo/${STEM}/level1/${STEM}.out.vol.u.nc input/${STEM}.out.vol.u.nc
+ln -sfn $modelo/${STEM}/level1/${STEM}.out.vol.v.nc input/${STEM}.out.vol.v.nc
+ln -sfn $modelo/${STEM}/level1/${STEM}.out.vol.w.nc input/${STEM}.out.vol.w.nc
+ln -sfn $modelo/${STEM}/level1/${STEM}.out.vol.l.nc input/${STEM}.out.vol.r.nc
+ln -sfn $modelo/${STEM}/level1/${STEM}.out.vol.rgrp.nc input/${STEM}.out.vol.grp.nc
+cp ${STEM}/irt_tracks_sorted_r_int.txt input/irt_tracks_sorted.txt
+cp ${STEM}/irt_tracks_mask_r_int.srv input/irt_tracks_mask.srv
+
+
+#./irt_cp_tracking3D.x
+./irt_cp_tracking3D_addtracer.x
+
+
+
