@@ -137,14 +137,12 @@ WRITE(*,*) "at",timestep
  
  ! reading the standard input fields
  READ(1,END=200) srv_header_input
-WRITE(*,*) "RAED 1 input/irt_objects_input_00.srv header"
  IF (lperiodic) THEN
    READ(1) input_field(:,:)
  ELSE
    input_field(:,:) = miss-1.
    READ(1) input_field(2:domsize_x-1,2:domsize_y-1)
  ENDIF
-WRITE(*,*) "RAED 1 input/irt_objects_input_00.srv file"
  
  track_numbers(:,:)=0
  IF (timestep .GE. max(onset,time_step_event)) THEN
