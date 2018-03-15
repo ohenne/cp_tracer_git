@@ -1,0 +1,36 @@
+#!/bin/bash
+STEM=test1plus4K #experiment name
+mkdir -p ${STEM}
+FIN=$modelo/$STEM/level2/${STEM}_budget.nc # inputfile
+
+var0=$1 # gwp #r_int #gwp #rwp #r_int #gwp #r_int #initial rain tracking
+
+cutoff_var0=$2       # cut off from itracked variable, use 3 strings
+thrs=1.0         # not yet used, use 3 strings
+mincellsize=4  #minimum rain cell size, use 3 strings
+echo ${cutoff_var0} ${mincellsize} ${thrs} ${tstart} > info.txt
+#
+###################################################
+# run celltracking for all neccesary fields 
+###################################################
+if [ ! -f input/irt_objects_input_00_${var0}.srv ]; then
+  cdo -f srv selvar,${var0} $FIN input/irt_objects_input_00_${var0}.srv
+fi
+ln -sfn input/irt_objects_input_00_${var0}.srv irt_objects_input_00.srv 
+./irt_objects_release.x 1
+./irt_advection_field_release.x
+./irt_tracks_release.x
+sort -n -k2 irt_tracks_nohead_output.txt > irt_tracks_sorted.txt
+./irt_trackmask_release.x
+
+mv irt_objects_mask.srv ${STEM}/irt_objects_mask_${var0}.srv
+mv irt_tracks_mask.srv ${STEM}/irt_tracks_mask_${var0}.srv
+mv irt_tracks_nohead_output.txt ${STEM}/rt_tracks_nohead_output_${var0}.srv
+./cut.bsh  # cuts the header and body to separate files
+sort -n -k2 headerfile.txt > ${STEM}/irt_tracks_header_sorted_${var0}.txt
+mv irt_tracks_output.txt ${STEM}/irt_tracks_output_${var0}.txt
+mv irt_objects_output.txt ${STEM}/irt_objects_output_${var0}.txt
+mv irt_advection_field.srv ${STEM}/irt_advection_field_${var0}.srv #| true 
+rm headerfile.txt
+mv irt_tracks_sorted.txt ${STEM}/irt_tracks_sorted_${var0}.txt
+mv irt_tracks_output_pure.txt ${STEM}/irt_tracks_output_pure_${var0}.txt

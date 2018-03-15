@@ -1,0 +1,105 @@
+# March 2018
+# job to compile cell identification and tracking and coldpool (CP) tracking
+# and run cell identification and CP trecking
+#
+# INPUTARGUMENTS:  compile  raintrack cptrack
+# ./run_cptracking.job compile raintrack cptrack
+# either chose one, two or all three options
+#
+# compile: compiles everything
+# raintrack: start rain cell identification and tracking
+#            identification of object, advection calculation 
+#            and tracking of cells by overlapping
+# cptrack: requires results from raintrack
+#          starts tracer at for every identified rain track
+#!/bin/bash
+set -ex
+
+# settings
+STAM='test1plus4K' # Project name
+
+cutoff=0.1       # cut off from precipitation, use 3 strings
+thrs=1.0         # not yet used, use 3 strings
+mincellsize=100  #minimum rain cell size, use 3 strings
+tstart=136
+echo ${cutoff} ${mincellsize} ${thrs} ${tstart} > info.txt
+
+# input file for precip cells
+FIN=$modelo/test1plus4K/level2/test1plus4K_budget.nc
+WINDIN=$modelo/test1plus4K/level1/
+
+##############################################################
+# START JOB 
+##########################################################
+# for first input argument
+if [ $1 == 'compile' ];then #either compile the code 
+  echo 'argument one: compile'
+  #COMPILE_COMMAND='ifort'
+  COMPILE_COMMAND='gfortran'
+  ${COMPILE_COMMAND} -o irt_objects_release.x irt_objects_release.f90 irt_parameters.f90
+  ${COMPILE_COMMAND} -o irt_advection_field_release.x irt_advection_field_release.f90 irt_parameters.f90
+  ${COMPILE_COMMAND} -o irt_tracks_release.x irt_tracks_release.f90 irt_parameters.f90 #-no-wrap-margin
+  ${COMPILE_COMMAND} -o irt_trackmask_release.x irt_trackmask_release.f90 irt_parameters.f90 #-no-wrap-margin
+
+  ${COMPILE_COMMAND} -o irt_cp_tracking.x irt_cp_tracking.f90 irt_parameters.f90
+elif [ $1 == 'raintrack' ];then # run the rain cell tracking
+  echo 'argument one: track rain cells'
+  # cp rain files:
+  cdo -f srv selvar,r_int ${FIN} irt_objects_input_00.srv
+  ./irt_objects_release.x 1
+  ./irt_advection_field_release.x
+  ./irt_tracks_release.x
+  sort -n -k2 irt_tracks_nohead_output.txt > irt_tracks_sorted.txt
+  ./irt_trackmask_release.x
+
+elif [ $1 == 'cptrack' ];then   # or the cp tracking
+  echo 'argument one: cold pool tracking'
+  cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.u.nc irt_objects_input_u.srv
+  cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.v.nc irt_objects_input_v.srv
+  ./irt_cp_tracking.x
+  # clean up 
+  cdo -f nc copy irt_objects_tracer.srv irt_objects_tracer.nc 
+  #rm *.srv
+fi
+
+#if second arguments: 
+if [ $# -gt 1 ];then 
+
+  if [ $2 == 'raintrack' ];then
+    echo 'argument two: track rain cells'
+    cdo -f srv selvar,r_int ${FIN} irt_objects_input_00.srv
+    ./irt_objects_release.x 1
+    ./irt_advection_field_release.x
+    ./irt_tracks_release.x
+    sort -n -k2 irt_tracks_nohead_output.txt > irt_tracks_sorted.txt
+    ./irt_trackmask_release.x
+
+  elif [ $2 == 'cptrack' ];then
+    echo 'argument two: cold pool tracking'
+    cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.u.nc irt_objects_input_u.srv
+    cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.v.nc irt_objects_input_v.srv
+   ./irt_cp_tracking.x
+   # clean up 
+   cdo -f nc copy irt_objects_tracer.srv irt_objects_tracer.nc
+   #rm *.srv
+  fi
+fi
+if [ $# -gt 2 ];then
+  if [ $3 == 'cptrack' ];then
+    echo 'argument three: cold pool tracking'
+    cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.u.nc irt_objects_input_u.srv
+    cdo -f srv sellevel,50 ${WINDIN}/test1plus4K.out.vol.v.nc irt_objects_input_v.srv
+    ./irt_cp_tracking.x
+    # clean up 
+    cdo -f nc copy irt_objects_tracer.srv irt_objects_tracer.nc
+    rm *.srv
+    
+  fi
+fi
+
+# create output directory and save the results
+mkdir  ${STAM}
+echo 'cutoff mincellsize thrs' > info.txt
+mv info.txt ${STAM}/.
+mv cp_history.txt ${STAM}/.
+cp irt_objects_tracer.nc ${STAM}/.

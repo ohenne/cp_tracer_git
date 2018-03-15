@@ -1,0 +1,14 @@
+#!/bin/bash
+set -ex
+
+  COMPILE_COMMAND='gfortran'
+  ${COMPILE_COMMAND} -o irt_objects_release.x irt_objects_release.f90 irt_parameters.f90
+  ${COMPILE_COMMAND} -o irt_advection_field_release.x irt_advection_field_release.f90 irt_parameters.f90
+  ${COMPILE_COMMAND} -o irt_tracks_release.x irt_tracks_release.f90 irt_parameters.f90 #-no-wrap-margin
+  ${COMPILE_COMMAND} -o irt_trackmask_release.x irt_trackmask_release.f90 irt_parameters.f90 #-no-wrap-margin
+  ${COMPILE_COMMAND} -o irt_cp_tracking.x irt_cp_tracking.f90 irt_parameters.f90
+  ${COMPILE_COMMAND} -o irt_cp_tracking.x irt_cp_tracking.f90 irt_parameters.f90 -L/usr/lib64/gfortran/modules/netcdf.mod -lnetcdf -lnetcdff
+  ${COMPILE_COMMAND} -o irt_cp_tracking3D.x irt_cp_tracking3D.f90 irt_parameters.f90 -L/usr/lib64/gfortran/modules/netcdf.mod -lnetcdf -lnetcdff
+  ${COMPILE_COMMAND} -o irt_cp_tracking3D_addtracer.x irt_cp_tracking3D_addtracer.f90 irt_parameters.f90 -L/usr/lib64/gfortran/modules/netcdf.mod -lnetcdf -lnetcdff
+
+

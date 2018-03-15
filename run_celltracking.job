@@ -1,0 +1,70 @@
+#!/bin/bash
+STEM=test1plus4K #experiment name
+FIN=$modelo/$STEM/level2/${STEM}_budget.nc # inputfile
+
+var0=r_int #initial rain tracking
+var1=gwp #variable to track 
+#var2=cwp
+
+cutoff_var1=0.5       # cut off from itracked variable, use 3 strings
+thrs=1.0         # not yet used, use 3 strings
+mincellsize=4  #minimum rain cell size, use 3 strings
+echo ${cutoff_var1} ${mincellsize} ${thrs} ${tstart} > info.txt
+#
+###################################################
+# run celltracking for all neccesary fields 
+###################################################
+
+cdo -f srv selvar,$var1 $FIN irt_objects_input_00.srv
+./irt_objects_release.x 1
+./irt_advection_field_release.x
+./irt_tracks_release.x
+sort -n -k2 irt_tracks_nohead_output.txt > irt_tracks_sorted.txt
+./irt_trackmask_release.x
+
+cp irt_objects_mask.srv ${STEM}/irt_objects_mask_${var1}.srv
+cp irt_tracks_mask.srv ${STEM}/irt_tracks_mask_${var1}.srv
+cp irt_tracks_mask.srv ${STEM}/irt_tracks_mask_${var1}.srv
+cp irt_tracks_nohead_output.txt ${STEM}/irt_tracks_nohead_output_${var1}.txt
+cp irt_tracks_output.txt ${STEM}/irt_tracks_output_${var1}.txt
+cp irt_objects_output.txt ${STEM}/irt_objects_output_${var1}.txt
+
+########################################################
+# make required files:
+########################################################
+ 
+#required: rain header file sorted
+#cp ${STEM}/irt_tracks_output_${var0}.txt ${STEM}/irt_tracks_output_body_${var0}.txt 
+#egrep -nr "(\*)" ${STEM}/irt_tracks_output_body_${var0}.txt | cut -d : -f 1 > linenumbers.txt
+#counter=0
+#one=1
+#while read line; do
+#   echo $line # or whaterver you want to do with the $line variable
+#   linetodel=$(( line - counter ))
+#   linetokeep=$(( linetodel + one ))
+#   echo $linetodel
+#   sed -n "${linetokeep}p" ${STEM}/irt_tracks_output_${var0}.txt >> ${STEM}/headerfile_${var0}.txt
+#   sed -i "${linetodel}d" ${STEM}/irt_tracks_output_body_${var0}.txt 
+#   sed -i "${linetodel}d" ${STEM}/irt_tracks_output_body_${var0}.txt
+#   ((counter++))
+#   ((counter++))
+#done < linenumbers.txt
+#rm linenumbers.txt
+#sort -n -k2 ${STEM}/headerfile_${var0}.txt > irt_tracks_header_sorted.txt #${STEM}/headerfile_${var0}_sorted.txt
+
+cp ${STEM}/irt_tracks_output_${var0}.txt irt_tracks_output.txt
+./cut.bsh
+sort -n -k2 headerfile.txt > irt_tracks_header_sorted.txt
+
+
+
+########################################################
+# find overlaying rain and cloud tracks:
+########################################################
+
+#prepare files
+cp ${STEM}/irt_tracks_mask_${var0}.srv irt_tracks_mask_main.srv
+cp ${STEM}/irt_tracks_mask_${var1}.srv irt_tracks_mask_2nd.srv
+
+# start programm ..
+./celloverlays.x
