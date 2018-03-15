@@ -1,0 +1,20 @@
+#!/bin/bash
+cp irt_tracks_output.txt irt_tracks_output_pure.txt
+egrep -nr "(\*)" irt_tracks_output_pure.txt | cut -d : -f 1 > linenumbers.txt
+counter=0
+one=1
+while read line; do 
+   echo $line # or whaterver you want to do with the $line variable
+   linetodel=$(( line - counter ))
+   linetokeep=$(( linetodel + one ))
+   echo $linetodel
+   sed -n "${linetokeep}p" irt_tracks_output_pure.txt >> headerfile.txt
+   sed -i "${linetodel}d" irt_tracks_output_pure.txt
+   sed -i "${linetodel}d" irt_tracks_output_pure.txt
+   ((counter++))
+   ((counter++))
+done < linenumbers.txt
+rm linenumbers.txt
+
+
+#sed -e '5,10d;12d' file
