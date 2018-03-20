@@ -347,14 +347,16 @@ SUBROUTINE update_tracer(velx,vely,domsize_x,domsize_y, &
 ! kann vlt weg       IF (ix .GT. 0 .AND. iy .GT. 0) THEN ! bogus now?
 
          ! get new location as decimal
-         ix_new = ix + dt*vx_intpi/resolution
-         iy_new = iy + dt*vely(ix_round,iy_round)/resolution
+         ix_new = ix + dt*vx_intp/resolution
+!         iy_new = iy + dt*vely(ix_round,iy_round)/resolution
+         iy_new = MOD(iy + dt*vy_intp/resolution+float(domsize_x)-1.0,float(domsize_x)) +1.0
+
 
          ! and as gridded values
          ix_round_new= INT(ix_new) !MOD(INT(ix_new)-1+domsize_x,domsize_x)+1
          iy_round_new=INT(iy_new)  !MOD(INT(iy_new)-1+domsize_y,domsize_y)+1
 
-         traced(it,1) = ix_new   ! new position at current timestep
+         traced(it,1) = MOD(ix_new+float(domsize_x) -1.0,float(domsize_x)) +1.0   ! new position at current timestep
          traced(it,2) = iy_new
          traced(it,3) = vx_intp  ! old interpolated velocity at prev timestep
          traced(it,4) = vy_intp
